@@ -62,9 +62,7 @@ where
 {
     check_params(threshold, limit)?;
 
-    let mut seed = [0u8; 32];
-    rng.fill_bytes(&mut seed);
-    let mut crng = ChaChaRng::from_seed(seed);
+    let mut crng = ChaChaRng::from_rng(rng).map_err(|_| Error::NotImplemented)?;
 
     let g = share_generator.unwrap_or_else(G::generator);
     let t = F::random(&mut crng);
@@ -72,9 +70,9 @@ where
 
     let blinding = blinding.unwrap_or_else(|| F::random(&mut crng));
     let (secret_shares, secret_polynomial) =
-        get_shares_and_polynomial(threshold, limit, secret, &mut crng);
+        get_shares_and_polynomial(threshold, limit, secret, &mut crng)?;
     let (blind_shares, blinding_polynomial) =
-        get_shares_and_polynomial(threshold, limit, blinding, &mut crng);
+        get_shares_and_polynomial(threshold, limit, blinding, &mut crng)?;
 
     let mut feldman_commitments = Vec::with_capacity(threshold);
     let mut pedersen_commitments = Vec::with_capacity(threshold);

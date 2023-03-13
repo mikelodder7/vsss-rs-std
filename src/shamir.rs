@@ -28,7 +28,7 @@ where
 {
     check_params(threshold, limit)?;
 
-    let (shares, _) = get_shares_and_polynomial(threshold, limit, secret, rng);
+    let (shares, _) = get_shares_and_polynomial(threshold, limit, secret, rng)?;
     Ok(shares)
 }
 
@@ -95,7 +95,7 @@ pub(crate) fn get_shares_and_polynomial<F, R>(
     limit: usize,
     secret: F,
     rng: &mut R,
-) -> (Vec<Share>, Polynomial<F>)
+) -> VsssResult<(Vec<Share>, Polynomial<F>)>
 where
     F: PrimeField,
     R: RngCore + CryptoRng,
@@ -107,15 +107,10 @@ where
     let mut x = F::one();
     for i in 0..limit {
         let y = polynomial.evaluate(x, threshold);
-        let mut t = Vec::with_capacity(1 + y.to_repr().as_ref().len());
-        t.push((i + 1) as u8);
-        t.extend_from_slice(y.to_repr().as_ref());
-
-        shares.push(Share(t));
-
+        shares.push(Share::from_field_element((i + 1) as u8, y)?);
         x += F::one();
     }
-    (shares, polynomial)
+    Ok((shares, polynomial))
 }
 
 /// Calculate lagrange interpolation
@@ -153,7 +148,7 @@ pub(crate) fn check_params(threshold: usize, limit: usize) -> VsssResult<()> {
     if threshold < 2 {
         return Err(Error::SharingMinThreshold);
     }
-    if limit > 255 {
+    if limit > MAX_SHARES {
         return Err(Error::SharingMaxRequest);
     }
     Ok(())

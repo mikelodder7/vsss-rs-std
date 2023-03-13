@@ -14,6 +14,11 @@ This crate was separated from `vsss-rs` so both modes can be included in the sam
 * This implementation does not require the Rust standard library.
 * All operations are constant time unless explicitly noted.
 
+## NOTE if upgrading from Version 2
+
+The standard mode has been split out into [vsss-rs-std](https://docs.rs/vsss-rs-std) to enable both in the same project.
+In addition, the interfaces have been redesigned to be compatible with each other as well as serialization.
+
 ## [Documentation](https://docs.rs/vsss-rs)
 
 Verifiable Secret Sharing Schemes are using to split secrets into

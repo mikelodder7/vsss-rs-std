@@ -15,29 +15,20 @@ use serde::{
     ser::{SerializeSeq, SerializeTuple},
     Deserializer, Serializer,
 };
+pub(crate) const MAX_SHARES: usize = 255;
 
 pub fn bytes_to_field<F: PrimeField>(bytes: &[u8]) -> Option<F> {
     let mut s_repr = F::Repr::default();
     s_repr.as_mut()[..bytes.len()].copy_from_slice(bytes);
 
-    let res = F::from_repr(s_repr);
-    if res.is_some().unwrap_u8() == 1u8 {
-        Some(res.unwrap())
-    } else {
-        None
-    }
+    Option::<F>::from(F::from_repr(s_repr))
 }
 
 pub fn bytes_to_group<G: Group + GroupEncoding>(bytes: &[u8]) -> Option<G> {
     let mut y_repr = <G as GroupEncoding>::Repr::default();
     y_repr.as_mut().copy_from_slice(bytes);
 
-    let y = G::from_bytes(&y_repr);
-    if y.is_some().unwrap_u8() == 1 {
-        Some(y.unwrap())
-    } else {
-        None
-    }
+    Option::<G>::from(G::from_bytes(&y_repr))
 }
 
 pub(crate) fn deserialize_group<'de, G: Group + GroupEncoding, D: Deserializer<'de>>(
@@ -194,11 +185,11 @@ pub(crate) fn serialize_group_vec<G: Group + GroupEncoding, S: Serializer>(
 }
 
 fn serialize_ref<B: AsRef<[u8]>, S: Serializer>(bytes: B, s: S) -> Result<S::Ok, S::Error> {
+    let bytes = bytes.as_ref();
     if s.is_human_readable() {
-        let h = hex::encode(bytes.as_ref());
+        let h = hex::encode(bytes);
         s.serialize_str(&h)
     } else {
-        let bytes = bytes.as_ref();
         let mut tupler = s.serialize_tuple(bytes.len())?;
         for b in bytes {
             tupler.serialize_element(b)?;
@@ -249,6 +240,7 @@ pub(crate) fn deserialize_group_vec<'de, G: Group + GroupEncoding, D: Deserializ
                     .ok_or_else(|| Error::invalid_value(Unexpected::Bytes(&buffer), &self))?;
                 let groups = uint_zigzag::Uint::try_from(&buffer[..bytes_cnt_size])
                     .map_err(|_| Error::invalid_value(Unexpected::Bytes(&buffer), &self))?;
+                let groups = groups.0 as usize;
 
                 i = uint_zigzag::Uint::MAX_BYTES - bytes_cnt_size;
                 let mut repr = G::Repr::default();
@@ -257,23 +249,22 @@ pub(crate) fn deserialize_group_vec<'de, G: Group + GroupEncoding, D: Deserializ
                     r[..i].copy_from_slice(&buffer[bytes_cnt_size..]);
                 }
                 let repr_len = repr.as_ref().len();
-                values.reserve(groups.0 as usize);
+                values.reserve(groups);
                 while let Some(b) = seq.next_element()? {
                     repr.as_mut()[i] = b;
                     i += 1;
                     if i == repr_len {
                         i = 0;
-                        let pt = G::from_bytes(&repr);
-                        if pt.is_none().unwrap_u8() == 1u8 {
-                            return Err(Error::invalid_value(Unexpected::Bytes(&buffer), &self));
-                        }
-                        values.push(pt.unwrap());
-                        if values.len() == groups.0 as usize {
+                        let pt = Option::<G>::from(G::from_bytes(&repr)).ok_or_else(|| {
+                            Error::invalid_value(Unexpected::Bytes(&buffer), &self)
+                        })?;
+                        values.push(pt);
+                        if values.len() == groups {
                             break;
                         }
                     }
                 }
-                if values.len() != groups.0 as usize {
+                if values.len() != groups {
                     return Err(Error::invalid_length(values.len(), &self));
                 }
             }

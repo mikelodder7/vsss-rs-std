@@ -31,7 +31,7 @@ where
 {
     check_params(threshold, limit)?;
 
-    let (shares, polynomial) = get_shares_and_polynomial(threshold, limit, secret, rng);
+    let (shares, polynomial) = get_shares_and_polynomial(threshold, limit, secret, rng)?;
 
     let g = generator.unwrap_or_else(G::generator);
 
