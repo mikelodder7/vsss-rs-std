@@ -137,7 +137,7 @@ impl Share {
             Err(Error::InvalidShareConversion)
         } else {
             let repr = group.to_bytes();
-            let mut bytes = vec![identifier; repr.as_ref().len()];
+            let mut bytes = vec![identifier; repr.as_ref().len() + 1];
             bytes[1..].copy_from_slice(repr.as_ref());
             Ok(Self(bytes))
         }
@@ -156,7 +156,7 @@ impl Share {
             Err(Error::InvalidShareConversion)
         } else {
             let repr = field.to_repr();
-            let mut bytes = vec![identifier; repr.as_ref().len()];
+            let mut bytes = vec![identifier; repr.as_ref().len() + 1];
             bytes[1..].copy_from_slice(repr.as_ref());
             Ok(Self(bytes))
         }
