@@ -13,7 +13,7 @@ use elliptic_curve::{
 use serde::{
     de::{Error, SeqAccess, Unexpected, Visitor},
     ser::{SerializeSeq, SerializeTuple},
-    Deserializer, Serializer,
+    Deserializer, Serializer, Serialize
 };
 pub(crate) const MAX_SHARES: usize = 255;
 
@@ -188,7 +188,7 @@ fn serialize_ref<B: AsRef<[u8]>, S: Serializer>(bytes: B, s: S) -> Result<S::Ok,
     let bytes = bytes.as_ref();
     if s.is_human_readable() {
         let h = hex::encode(bytes);
-        s.serialize_str(&h)
+        h.serialize(s)
     } else {
         let mut tupler = s.serialize_tuple(bytes.len())?;
         for b in bytes {

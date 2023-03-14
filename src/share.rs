@@ -15,13 +15,14 @@ use serde::{
     ser::SerializeSeq,
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use zeroize::Zeroize;
+use subtle::Choice;
+use zeroize::ZeroizeOnDrop;
 
 /// A Shamir simple secret share
 /// provides no integrity checking
 /// The first byte is the X-coordinate or identifier
 /// The remaining bytes are the Y-coordinate
-#[derive(Clone, Debug, Default, PartialEq, Eq, Zeroize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, ZeroizeOnDrop)]
 pub struct Share(pub Vec<u8>);
 
 impl Serialize for Share {
@@ -100,18 +101,19 @@ impl TryFrom<&[u8]> for Share {
 
 impl From<Share> for Vec<u8> {
     fn from(share: Share) -> Self {
-        share.0
+        share.0.clone()
     }
 }
 
 impl Share {
     /// True if all value bytes are zero in constant time
-    pub fn is_zero(&self) -> bool {
-        let mut v = 0u8;
+    pub fn is_zero(&self) -> Choice {
+        let mut v = 0i8;
         for b in self.value() {
-            v |= b;
+            v |= *b as i8;
         }
-        v == 0
+        let v = ((v | -v) >> 7) + 1;
+        Choice::from(v as u8)
     }
 
     /// The identifier for this share

@@ -77,7 +77,7 @@ where
         if dups.contains(&(identifier as usize - 1)) {
             return Err(Error::SharingDuplicateIdentifier);
         }
-        if s.is_zero() {
+        if s.is_zero().into() {
             return Err(Error::InvalidShare);
         }
         dups.insert(identifier as usize - 1);

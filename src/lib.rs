@@ -167,9 +167,6 @@ pub mod curve25519;
 #[cfg(feature = "curve25519")]
 pub use curve25519_dalek;
 pub use elliptic_curve;
-#[cfg(feature = "secp256k1")]
-pub use k256;
 #[cfg(feature = "curve25519")]
 pub use sha2;
-#[cfg(any(feature = "secp256k1", feature = "curve25519"))]
 pub use subtle;
