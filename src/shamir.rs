@@ -104,11 +104,11 @@ where
     // Generate the shares of (x, y) coordinates
     // x coordinates are incremental from [1, N+1). 0 is reserved for the secret
     let mut shares = Vec::with_capacity(limit);
-    let mut x = F::one();
+    let mut x = F::ONE;
     for i in 0..limit {
         let y = polynomial.evaluate(x, threshold);
         shares.push(Share::from_field_element((i + 1) as u8, y)?);
-        x += F::one();
+        x += F::ONE;
     }
     Ok((shares, polynomial))
 }
@@ -124,7 +124,7 @@ where
     let mut result = S::default();
 
     for i in 0..limit {
-        let mut basis = F::one();
+        let mut basis = F::ONE;
         for j in 0..limit {
             if i == j {
                 continue;

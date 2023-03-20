@@ -13,7 +13,7 @@ use elliptic_curve::{
 use serde::{
     de::{Error, SeqAccess, Unexpected, Visitor},
     ser::{SerializeSeq, SerializeTuple},
-    Deserializer, Serializer, Serialize
+    Deserializer, Serialize, Serializer,
 };
 pub(crate) const MAX_SHARES: usize = 255;
 
